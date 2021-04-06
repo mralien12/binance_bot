@@ -1,0 +1,4 @@
+[indicator]
+rsi_level = 10
+is_sma5_over_sma_10 = 0
+
