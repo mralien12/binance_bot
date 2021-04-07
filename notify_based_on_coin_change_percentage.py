@@ -1,4 +1,5 @@
 import os
+import telegram_api
 from time import sleep
 
 from binance.client import Client
@@ -8,11 +9,21 @@ from twisted.internet import reactor
 import pandas as pd
 
 symbol = 'ADAUSDT'
+symbols = []
 interval=5 # minutes
 # init
 api_key = os.environ.get('binance_api')
 api_secret = os.environ.get('binance_secret')
 client = Client(api_key, api_secret)
+
+### Get all symbol with USDT
+ticker_list = client.get_all_tickers()
+for ticker in ticker_list:
+    if str(ticker['symbol'])[-4:] == 'USDT':
+        symbols.append(ticker['symbol'])
+
+print(len(symbols))
+exit()
 price = {symbol: pd.DataFrame(columns=['date', 'price']), 'error':False}
 
 def btc_pairs_trade(msg):
@@ -51,12 +62,12 @@ while True:
         max_price = df.price.max()
         min_price = df.price.min()
 
-        if df.price.iloc[-1] < max_price * 0.95:
-            print(symbol + ' is decreased 5%')
+        if df.price.iloc[-1] < max_price * 0.9999955:
+            telegram_api.send_msg(symbol + ' is decreased by 5% int last 5 minutes')
             break
 
-        elif df.price.iloc[-1] > min_price * 1.05:
-            print(symbol + ' is increased 5%')
+        elif df.price.iloc[-1] > min_price * 1.000005:
+            telegram_api.send_msg(symbol + ' is increased by 5% in last 5 minutes')
             break
 
     sleep(0.5)
