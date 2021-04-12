@@ -11,6 +11,7 @@ import pandas as pd
 symbol = 'ADAUSDT'
 symbols = []
 interval=5 # minutes
+change_in_percent = 3
 # init
 api_key = os.environ.get('binance_api')
 api_secret = os.environ.get('binance_secret')
@@ -22,7 +23,12 @@ for ticker in ticker_list:
     if str(ticker['symbol'])[-4:] == 'USDT':
         symbols.append(ticker['symbol'])
 
-print(len(symbols))
+# for sym in symbols:
+timestamp = client._get_earliest_valid_timestamp(symbol, '1h')
+bars = client.get_historical_klines(symbol, '1h', timestamp, limit = 500)
+print(bars)
+
+
 exit()
 price = {symbol: pd.DataFrame(columns=['date', 'price']), 'error':False}
 
@@ -62,11 +68,11 @@ while True:
         max_price = df.price.max()
         min_price = df.price.min()
 
-        if df.price.iloc[-1] < max_price * 0.9999955:
+        if df.price.iloc[-1] < max_price * (1 - change_in_percent / 100):
             telegram_api.send_msg(symbol + ' is decreased by 5% int last 5 minutes')
             break
 
-        elif df.price.iloc[-1] > min_price * 1.000005:
+        elif df.price.iloc[-1] > min_price * (1 + change_in_percent / 100):
             telegram_api.send_msg(symbol + ' is increased by 5% in last 5 minutes')
             break
 

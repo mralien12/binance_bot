@@ -42,14 +42,14 @@ do_check_rsi() {
 	do
 		rc=`ps -ef | grep buy | grep $coin`
 		if [ -z "$rc" ]; then
-			python buy_based_on_rsi.py $coin $history_interval &
+			python3 buy_based_on_rsi.py $coin $history_interval &
 			sleep $SLEEP_TIME
 		fi
-#		rc=`ps -ef | grep sell | grep $coin`
-#		if [ -z "$rc" ]; then
-#			python sell_based_on_rsi.py $coin $history_interval &
-#			sleep $SLEEP_TIME
-#		fi
+		# rc=`ps -ef | grep sell | grep $coin`
+		# if [ -z "$rc" ]; then
+		# 	python3 sell_based_on_rsi.py $coin $history_interval &
+		# 	sleep $SLEEP_TIME
+		# fi
 	done
 }
 
@@ -57,7 +57,7 @@ if [ $# -lt 2 ]; then
 	help
 fi
 
-history_interval=$1
+history_interval=$2
 ### Forever loop
 while true
 do
