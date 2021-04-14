@@ -2,6 +2,8 @@ import os
 import telebot
 import datetime
 import btalib
+import time
+import shutil
 from binance.client import Client
 from threading import Thread
 import pandas as pd
@@ -11,8 +13,9 @@ KLINE_DIR = CACHE_DIR + '/kline/'
 if not os.path.exists(CACHE_DIR):
     os.makedirs(CACHE_DIR)
 
-if not os.path.exists(KLINE_DIR):
-    os.makedirs(KLINE_DIR)
+shutil.rmtree(KLINE_DIR)
+# os.removedirs(KLINE_DIR)
+os.makedirs(KLINE_DIR)
 
 token = os.environ.get('tele_bot_binance_toke')
 chat_id = os.environ.get('tele_bot_binance_chat_id')
@@ -64,33 +67,42 @@ def load_candles(sym):
     coin_df.set_index('date', inplace=True)
     coin_df.to_csv(KLINE_DIR + sym + '.dat')
 
-    coin_df = pd.read_csv(KLINE_DIR + sym + '.dat')
-    coin_df.index = pd.to_datetime(coin_df.index, unit='ms')
-    # coin_df['sma_5'] = btalib.sma(coin_df.close, period=5).df
-    rsi = btalib.rsi(coin_df, period=6)
-    current_rsi = rsi.df.rsi[-1]
-    print(current_rsi)
+    # coin_df = pd.read_csv(KLINE_DIR + sym + '.dat')
+    # coin_df.index = pd.to_datetime(coin_df.index, unit='ms')
+    # # coin_df['sma_5'] = btalib.sma(coin_df.close, period=5).df
+    # rsi = btalib.rsi(coin_df, period=6)
+    # current_rsi = rsi.df.rsi[-1]
+    # print(current_rsi)
 
 ticker_list = client.get_all_tickers()
 symbols = []
 ### Get all symbol with USDT
 print("Get all symbols")
-for ticker in ticker_list:
-    if str(ticker['symbol'])[-4:] == 'USDT':
-        symbols.append(ticker['symbol'])
+count = 0
+with open(CACHE_DIR + "/all_symbol.txt", 'w') as f:
+    ### Get all symbol with USDT
+    for ticker in ticker_list:
+        if str(ticker['symbol'])[-4:] == 'USDT':
+            f.write(ticker['symbol'] + '\n')
+            symbols.append(ticker['symbol'])
+            count = count + 1
+            if count > 10:
+                break
+f.close()
 
 # get 4h candles for symbols
 print('Loading candle data for symbols...')
-# fake_symbol = ['ADAUSDT', 'LINKUSDT']
-fake_symbol = ['LINKUSDT']
+fake_symbol = ['NEOUSDT', 'ADAUSDT']
+# fake_symbol = ['LINKUSDT']
 # for sym in symbols:
 for sym in fake_symbol:
     Thread(target=load_candles, args=(sym,)).start()
 
 # for sym in fake_symbol:
 
-# while len(candles) < len(symbols):
-#     print('%s/%s loaded' %(len(candles), len(symbols)), end='\r', flush=True)
-#     time.sleep(0.1)
+list_file_in_kdir = os.listdir(KLINE_DIR)
+while len(list_file_in_kdir) < len(symbols):
+    print('%s/%s loaded' %(len(list_file_in_kdir), len(symbols)), end='\r', flush=True)
+    time.sleep(0.1)
 print("Bot is running!!!")
 # bot.polling()
