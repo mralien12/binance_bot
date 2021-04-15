@@ -56,7 +56,6 @@ def load_candles(sym):
     # timestamp = client._get_earliest_valid_timestamp(sym, his_interval)
     # data_kline = client.get_historical_klines(sym, Client.KLINE_INTERVAL_15MINUTE, "2 day ago UTC")
     data_kline = client.get_historical_klines(sym, Client.KLINE_INTERVAL_5MINUTE, "1 day ago UTC")
-    print(data_kline)
     # data_kline = client.get_historical_klines(sym, Client.KLINE_INTERVAL_1HOUR, "24 hours ago UTC")
     # data_kline = client.get_historical_klines(sym, Client.KLINE_INTERVAL_1HOUR, timestamp, limit=500)
 
@@ -64,11 +63,13 @@ def load_candles(sym):
     for col in data_kline:
         del col[8:]
     coin_df = pd.DataFrame(data_kline, columns=['date', 'open', 'high', 'low', 'close', 'vol', 'close_time', 'quote_vol'])
-    # coin_df = pd.DataFrame(data_kline, columns=['date', 'open', 'high', 'low', 'close'])
     coin_df.set_index('date', inplace=True)
     coin_df.to_csv(KLINE_DIR + sym + '.dat')
 
-    # coin_df = pd.read_csv(KLINE_DIR + sym + '.dat')
+
+    coin_df = pd.read_csv(KLINE_DIR + sym + '.dat')
+    print(coin_df.tail(1)['quote_vol'])
+    exit()
     # coin_df.index = pd.to_datetime(coin_df.index, unit='ms')
     # # coin_df['sma_5'] = btalib.sma(coin_df.close, period=5).df
     # rsi = btalib.rsi(coin_df, period=6)
@@ -77,39 +78,51 @@ def load_candles(sym):
 
 ticker_list = client.get_all_tickers()
 symbols = []
+# count = 0
 ### Get all symbol with USDT
 print("Get all symbols")
-count = 0
 with open(CACHE_DIR + "/all_symbol.txt", 'w') as f:
     ### Get all symbol with USDT
     for ticker in ticker_list:
-        if str(ticker['symbol'])[-4:] == 'USDT' and ticker['price'] != 0:
+        if str(ticker['symbol'])[-4:] == 'USDT' and float(ticker['price']) != 0:
             f.write(ticker['symbol'] + '\n')
             symbols.append(ticker['symbol'])
-            print(ticker)
             # count = count + 1
-            # if count > 10:
+            # if count > 20:
             #     break
 f.close()
-exit()
 
 # get 4h candles for symbols
 print('Loading candle data for symbols...')
 # fake_symbol = ['NEOUSDT', 'ADAUSDT']
 # fake_symbol = ['LINKUSDT']
 # for sym in symbols:
-# with open(CACHE_DIR + '/all_symbol.txt', 'w') as f:
-#     for symbol in f:
-#         load_candles(symbol)
+threads = []
+with open(CACHE_DIR + '/all_symbol.txt', 'r') as f:
+    lines = f.readlines()
+    for line in lines:
+        symbol = line.strip()
+        load_candles(symbol)
+        # t = Thread(target=load_candles, args=(symbol,)).start()
+        # threads.append(t)
+        # load_candles(symbol)
+f.close()
+
+# for thread in threads:
+#     thread.start()
+#     time.sleep(5)
+
+# for thread in threads:
+#     threads.join()
 # for sym in symbols:
 #     # Thread(target=load_candles, args=(sym,)).start()
 #     load_candles(sym)
-load_candles('1INCHUSDT')
+# load_candles('1INCHUSDT')
 
 # for sym in fake_symbol:
 
-list_file_in_kdir = os.listdir(KLINE_DIR)
-# while len(list_file_in_kdir) < len(symbols):
+# while len(os.listdir(KLINE_DIR)) < len(symbols):
+#     list_file_in_kdir = os.listdir(KLINE_DIR)
 #     print('%s/%s loaded' %(len(list_file_in_kdir), len(symbols)), end='\r', flush=True)
 #     time.sleep(0.1)
 
