@@ -8,13 +8,13 @@ from binance.client import Client
 from threading import Thread
 import pandas as pd
 
-CACHE_DIR = '__binance_cache__'
+CACHE_DIR = '/tmp/__binance_cache__'
 KLINE_DIR = CACHE_DIR + '/kline/'
 if not os.path.exists(CACHE_DIR):
     os.makedirs(CACHE_DIR)
 
-shutil.rmtree(KLINE_DIR)
-# os.removedirs(KLINE_DIR)
+if os.path.exists(KLINE_DIR):
+    shutil.rmtree(KLINE_DIR)
 os.makedirs(KLINE_DIR)
 
 token = os.environ.get('tele_bot_binance_toke')
@@ -49,13 +49,14 @@ def get_all_symbol(message):
 #     bot.reply_to(message, message.text)
 
 def load_candles(sym):
-    import btalib
     print("Loading candle: " + sym)
     # get timestamp of earliest date data is available
     his_interval = '1h'
     # timestamp = datetime.datetime.now().timestamp() - 20 * 60 * 60 # 20 hours ago
     # timestamp = client._get_earliest_valid_timestamp(sym, his_interval)
-    data_kline = client.get_historical_klines(sym, Client.KLINE_INTERVAL_15MINUTE, "2 day ago UTC")
+    # data_kline = client.get_historical_klines(sym, Client.KLINE_INTERVAL_15MINUTE, "2 day ago UTC")
+    data_kline = client.get_historical_klines(sym, Client.KLINE_INTERVAL_5MINUTE, "1 day ago UTC")
+    print(data_kline)
     # data_kline = client.get_historical_klines(sym, Client.KLINE_INTERVAL_1HOUR, "24 hours ago UTC")
     # data_kline = client.get_historical_klines(sym, Client.KLINE_INTERVAL_1HOUR, timestamp, limit=500)
 
@@ -82,27 +83,35 @@ count = 0
 with open(CACHE_DIR + "/all_symbol.txt", 'w') as f:
     ### Get all symbol with USDT
     for ticker in ticker_list:
-        if str(ticker['symbol'])[-4:] == 'USDT':
+        if str(ticker['symbol'])[-4:] == 'USDT' and ticker['price'] != 0:
             f.write(ticker['symbol'] + '\n')
             symbols.append(ticker['symbol'])
-            count = count + 1
-            if count > 10:
-                break
+            print(ticker)
+            # count = count + 1
+            # if count > 10:
+            #     break
 f.close()
+exit()
 
 # get 4h candles for symbols
 print('Loading candle data for symbols...')
-fake_symbol = ['NEOUSDT', 'ADAUSDT']
+# fake_symbol = ['NEOUSDT', 'ADAUSDT']
 # fake_symbol = ['LINKUSDT']
 # for sym in symbols:
-for sym in fake_symbol:
-    Thread(target=load_candles, args=(sym,)).start()
+# with open(CACHE_DIR + '/all_symbol.txt', 'w') as f:
+#     for symbol in f:
+#         load_candles(symbol)
+# for sym in symbols:
+#     # Thread(target=load_candles, args=(sym,)).start()
+#     load_candles(sym)
+load_candles('1INCHUSDT')
 
 # for sym in fake_symbol:
 
 list_file_in_kdir = os.listdir(KLINE_DIR)
-while len(list_file_in_kdir) < len(symbols):
-    print('%s/%s loaded' %(len(list_file_in_kdir), len(symbols)), end='\r', flush=True)
-    time.sleep(0.1)
+# while len(list_file_in_kdir) < len(symbols):
+#     print('%s/%s loaded' %(len(list_file_in_kdir), len(symbols)), end='\r', flush=True)
+#     time.sleep(0.1)
+
 print("Bot is running!!!")
 # bot.polling()
